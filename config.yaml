@@ -58,6 +58,13 @@ core_config_version: 0
 # "TOKEN_THEFT" | "UNAUTHORISED". The session is revoked regardless of this setting.
 # recent_token_reuse_behaviour:
 
+# (DIFFERENT_ACROSS_APPS | OPTIONAL | Default: false) boolean value. If true, sessions are isolated per tenant:
+# session management APIs called in a tenant's context can only see and affect that tenant's sessions (handle-based
+# session APIs reject handles from other tenants, and listing/revoking sessions for a user is scoped to the request
+# tenant). Token-based APIs (verify, refresh, regenerate) are unaffected. Must be the same for all tenants within
+# an app.
+# tenant_session_isolation_enabled:
+
 # (OPTIONAL | Default: true) boolean value. If true, the core refuses to start when the base database is missing
 # tables or columns this version needs (a skipped manual migration), and tenant databases with a mismatched schema
 # are not served. If false, mismatches are only logged and just the queries touching the missing schema fail.

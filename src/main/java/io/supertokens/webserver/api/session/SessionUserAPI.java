@@ -30,6 +30,7 @@ import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoundException;
 import io.supertokens.session.Session;
+import io.supertokens.tenantsession.TenantSession;
 import io.supertokens.useridmapping.UserIdMappingOptOut;
 import io.supertokens.useridmapping.UserIdType;
 import io.supertokens.webserver.InputParser;
@@ -64,6 +65,17 @@ public class SessionUserAPI extends WebserverAPI {
         boolean fetchAcrossAllTenants = true;
         if (fetchAcrossAllTenantsString != null) {
             fetchAcrossAllTenants = fetchAcrossAllTenantsString.toLowerCase().equals("true");
+        }
+
+        // With tenant session isolation on, listing is always scoped to the request tenant.
+        if (fetchAcrossAllTenants) {
+            try {
+                if (TenantSession.isIsolationEnabled(getTenantIdentifier(req), main)) {
+                    fetchAcrossAllTenants = false;
+                }
+            } catch (TenantOrAppNotFoundException e) {
+                throw new ServletException(e);
+            }
         }
 
         String fetchSessionsForAllLinkedAccountsString = InputParser.getQueryParamOrThrowError(req,

@@ -35,6 +35,7 @@ import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoun
 import io.supertokens.pluginInterface.useridmapping.UserIdMapping;
 import io.supertokens.session.Session;
 import io.supertokens.storageLayer.StorageLayer;
+import io.supertokens.tenantsession.TenantSession;
 import io.supertokens.useridmapping.UserIdMappingOptOut;
 import io.supertokens.useridmapping.UserIdType;
 import io.supertokens.webserver.InputParser;
@@ -97,6 +98,17 @@ public class SessionRemoveAPI extends WebserverAPI {
         }
         if (revokeAcrossAllTenants == null) {
             revokeAcrossAllTenants = true;
+        }
+
+        // With tenant session isolation on, revoking by userId is always scoped to the request tenant.
+        if (userId != null && revokeAcrossAllTenants) {
+            try {
+                if (TenantSession.isIsolationEnabled(getTenantIdentifier(req), main)) {
+                    revokeAcrossAllTenants = false;
+                }
+            } catch (TenantOrAppNotFoundException e) {
+                throw new ServletException(e);
+            }
         }
 
         Boolean revokeSessionsForLinkedAccounts = InputParser.parseBooleanOrThrowError(input,
@@ -173,10 +185,21 @@ public class SessionRemoveAPI extends WebserverAPI {
         } else {
             try {
                 AppIdentifier appIdentifier = getAppIdentifier(req);
+                TenantIdentifier requestTenantIdentifier = getTenantIdentifier(req);
+                boolean isolationEnabled = TenantSession.isIsolationEnabled(requestTenantIdentifier, main);
                 Map<String, List<String>> sessionHandlesByTenantId = new HashMap<>();
 
                 for (String sessionHandle : sessionHandles) {
                     String tenantId = Session.getTenantIdFromSessionHandle(sessionHandle);
+                    if (tenantId == null) {
+                        tenantId = TenantIdentifier.DEFAULT_TENANT_ID;
+                    }
+                    // With tenant session isolation on, handles from other tenants cannot be revoked from
+                    // this tenant's context.
+                    if (isolationEnabled && !tenantId.equals(requestTenantIdentifier.getTenantId())) {
+                        throw new ServletException(new BadRequestException(
+                                "Session handle belongs to a different tenant"));
+                    }
                     if (!sessionHandlesByTenantId.containsKey(tenantId)) {
                         sessionHandlesByTenantId.put(tenantId, new ArrayList<>());
                     }

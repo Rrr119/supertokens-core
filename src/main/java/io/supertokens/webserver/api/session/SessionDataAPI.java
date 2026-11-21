@@ -30,6 +30,7 @@ import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoun
 import io.supertokens.session.Session;
 import io.supertokens.session.accessToken.AccessToken;
 import io.supertokens.storageLayer.StorageLayer;
+import io.supertokens.tenantsession.TenantSession;
 import io.supertokens.utils.SemVer;
 import io.supertokens.utils.Utils;
 import io.supertokens.webserver.InputParser;
@@ -71,6 +72,9 @@ public class SessionDataAPI extends WebserverAPI {
         }
 
         try {
+            // With tenant session isolation on, session data can only be read from the session's own tenant.
+            TenantSession.enforceSessionHandleInRequestTenant(getTenantIdentifier(req), main, sessionHandle);
+
             JsonObject userDataInDatabase = Session.getSessionData(tenantIdentifier, storage, sessionHandle);
 
             JsonObject result = new JsonObject();
@@ -78,7 +82,7 @@ public class SessionDataAPI extends WebserverAPI {
             result.add("userDataInDatabase", userDataInDatabase);
             super.sendJsonResponse(200, result, resp);
 
-        } catch (StorageQueryException e) {
+        } catch (StorageQueryException | TenantOrAppNotFoundException e) {
             throw new ServletException(e);
         } catch (UnauthorisedException e) {
             Logging.debug(main, tenantIdentifier, Utils.exceptionStacktraceToString(e));
@@ -112,6 +116,9 @@ public class SessionDataAPI extends WebserverAPI {
         try {
             // This is only here for consistency: the difference between the two versions is the handling of jwtData
             // which is always null here
+            // With tenant session isolation on, session data can only be written from the session's own tenant.
+            TenantSession.enforceSessionHandleInRequestTenant(getTenantIdentifier(req), main, sessionHandle);
+
             if (getVersionFromRequest(req).greaterThanOrEqualTo(SemVer.v2_21)) {
                 AccessToken.VERSION version = AccessToken.getAccessTokenVersionForCDI(getVersionFromRequest(req));
                 Session.updateSession(tenantIdentifier, storage, sessionHandle,
@@ -125,7 +132,7 @@ public class SessionDataAPI extends WebserverAPI {
             result.addProperty("status", "OK");
             super.sendJsonResponse(200, result, resp);
 
-        } catch (StorageQueryException e) {
+        } catch (StorageQueryException | TenantOrAppNotFoundException e) {
             throw new ServletException(e);
         } catch (AccessTokenPayloadError e) {
             throw new ServletException(new BadRequestException(e.getMessage()));

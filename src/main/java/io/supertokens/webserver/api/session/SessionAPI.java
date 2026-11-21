@@ -37,6 +37,7 @@ import io.supertokens.session.Session;
 import io.supertokens.session.accessToken.AccessToken;
 import io.supertokens.session.info.SessionInformationHolder;
 import io.supertokens.storageLayer.StorageLayer;
+import io.supertokens.tenantsession.TenantSession;
 import io.supertokens.utils.SemVer;
 import io.supertokens.utils.Utils;
 import io.supertokens.webserver.InputParser;
@@ -155,6 +156,9 @@ public class SessionAPI extends WebserverAPI {
         }
 
         try {
+            // With tenant session isolation on, a session can only be fetched from its own tenant's context.
+            TenantSession.enforceSessionHandleInRequestTenant(getTenantIdentifier(req), main, sessionHandle);
+
             SessionInfo sessionInfo = Session.getSession(tenantIdentifier, storage, sessionHandle);
 
             JsonObject result = new Gson().toJsonTree(sessionInfo).getAsJsonObject();
@@ -172,7 +176,7 @@ public class SessionAPI extends WebserverAPI {
 
             super.sendJsonResponse(200, result, resp);
 
-        } catch (StorageQueryException e) {
+        } catch (StorageQueryException | TenantOrAppNotFoundException e) {
             throw new ServletException(e);
         } catch (UnauthorisedException e) {
             Logging.debug(main, tenantIdentifier, Utils.exceptionStacktraceToString(e));

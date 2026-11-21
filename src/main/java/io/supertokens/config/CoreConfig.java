@@ -128,6 +128,16 @@ public class CoreConfig {
     @EnumProperty({"TOKEN_THEFT", "UNAUTHORISED"})
     private String recent_token_reuse_behaviour = "TOKEN_THEFT";
 
+    @EnvName("TENANT_SESSION_ISOLATION_ENABLED")
+    @NotConflictingInApp
+    @JsonProperty
+    @ConfigDescription(
+            "If true, sessions are isolated per tenant: session management APIs called in a tenant's context can "
+                    + "only see and affect that tenant's sessions (handle-based session APIs reject handles from "
+                    + "other tenants, and listing/revoking sessions for a user is scoped to the request tenant). "
+                    + "Token-based APIs (verify, refresh, regenerate) are unaffected. (Default: false)")
+    private boolean tenant_session_isolation_enabled = false;
+
     @EnvName("SCHEMA_CHECK_STRICT_MODE")
     @ConfigYamlOnly
     @JsonProperty
@@ -825,6 +835,10 @@ public class CoreConfig {
 
     public boolean getAccessTokenBlacklisting() {
         return access_token_blacklisting;
+    }
+
+    public boolean getTenantSessionIsolationEnabled() {
+        return tenant_session_isolation_enabled;
     }
 
     public long getRefreshTokenValidityInMillis() {
