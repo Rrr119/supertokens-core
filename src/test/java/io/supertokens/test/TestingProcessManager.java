@@ -90,30 +90,12 @@ public class TestingProcessManager {
     }
 
     public static int getFreePort() {
-        for (int attempt = 0; attempt < 1000; attempt++) {
-            int randomPort = 10000 + (int)(Math.random() * (20000 - 10000));
-            try {
-                java.net.Socket socket = new java.net.Socket("localhost", randomPort);
-                socket.close();
-                Thread.sleep(100);
-            } catch (java.net.ConnectException e1) {
-                // confirm again
-                try {
-                    Thread.sleep(new Random().nextInt(100));
-                    java.net.Socket socket = new java.net.Socket("localhost", randomPort);
-                    socket.close();
-                } catch (java.net.ConnectException e2) {
-                    // Port is available
-                    return randomPort;
-                } catch (Exception e3) {
-                    throw new RuntimeException(e3);
-                }
-
-            } catch (Exception e4) {
-                throw new RuntimeException(e4);
-            }
+        try (java.net.ServerSocket socket = new java.net.ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        throw new RuntimeException("Could not find a free port after 1000 attempts");
     }
 
     public static abstract class SharedProcess extends Thread implements TestingProcess {

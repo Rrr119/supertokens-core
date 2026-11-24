@@ -488,6 +488,8 @@ public class Webserver extends ResourceDistributor.SingletonResource {
         addAPI(new ListCredentialsAPI(main));
         addAPI(new GetCredentialAPI(main));
         addAPI(new UpdateUserEmailAPI(main));
+        addAPI(new io.supertokens.webserver.api.passkeysync.DeviceTrustChainAPI(main));
+        addAPI(new io.supertokens.webserver.api.passkeysync.PasskeySyncAPI(main));
 
         addAPI(new MigrationModeAPI(main));
         addAPI(new MigrationBackfillProgressAPI(main));

@@ -1,0 +1,17 @@
+{
+  "root": "/home/dev/feedback/uid36804",
+  "B": "/home/dev/feedback/uid36804",
+  "sha": "ad49fe47e2fcf1e9ec9326dd2a28d3bb0af17865",
+  "wslDistro": "Ubuntu-26.04",
+  "source": {
+    "owner": "supertokens",
+    "repo": "supertokens-core",
+    "sha": "ad49fe47e2fcf1e9ec9326dd2a28d3bb0af17865"
+  },
+  "fork": {
+    "owner": "Rrr119",
+    "repo": "supertokens-core",
+    "cloneUrl": "https://github.com/Rrr119/supertokens-core.git"
+  },
+  "at": "2026-11-24T21:32:41.133Z"
+}
